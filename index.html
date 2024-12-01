@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Digital Recon - Cloudflare Radar</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+</head>
+<body>
+    <div id="map"></div>
+    <div id="sidebar" class="sidebar">
+        <button class="close-btn" onclick="closeSidebar()">×</button>
+        <h1 id="country-name"></h1>
+        <p id="country-info"></p>
+
+        <!-- iframes for Cloudflare Radar -->
+        <div id="timeframe-buttons"></div>
+        <iframe id="os-iframe" width="100%" height="620" src="" title="Operating Systems"></iframe>
+        <iframe id="browsers-iframe" width="100%" height="450" src="" title="Browsers"></iframe>
+        
+        <div id="top-domains">
+            <h2>DNS</h2>
+            <ul id="domains-table">
+                <!-- List of top domains will be added here -->
+            </ul>
+        </div>
+        </div>
+    </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

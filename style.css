@@ -1,0 +1,143 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "DotGothic16", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+#map {
+    width: 100%;
+    height: 100vh;
+}
+/* Sidebar styles */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 70%;
+    height: 100%;
+    background: white;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    transform: translateX(100%); /* Fully off-screen */
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0; /* Invisible by default */
+    overflow-y: auto;
+    padding: 20px;
+    visibility: hidden; /* Prevent interaction when hidden */
+}
+.sidebar.active {
+    transform: translateX(0); /* Slide in */
+    opacity: 1; /* Fully visible */
+    visibility: visible; /* Allow interaction */
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+}
+.sidebar h3 {
+    margin-top: 0;
+}
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #333;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+#timeframe-buttons {
+  margin: 20px 0;
+}
+
+#timeframe-buttons button {
+  align-items: center;
+  background-image: linear-gradient(144deg,#AF40FF, #5B42F3 50%,#00DDEB);
+  border: 0;
+  border-radius: 8px;
+  margin-right: 20px;
+  box-shadow: rgba(151, 65, 252, 0.2) 0 15px 30px -5px;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  display: inline-flex;
+  font-size: 20px;
+  justify-content: center;
+  line-height: 1em;
+  max-width: 100%;
+  min-width: 140px;
+  padding: 3px;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#timeframe-buttons button:active,
+#timeframe-buttons button:hover {
+  outline: 0;
+}
+
+#timeframe-buttons button span {
+  background-color: rgb(5, 6, 45);
+  padding: 10px 16px;
+  border-radius: 6px;
+  width: 100%;
+  height: 100%;
+  transition: 300ms;
+}
+
+#timeframe-buttons button:hover span {
+  background: none;
+}
+
+@media (min-width: 768px) {
+  #timeframe-buttons button {
+    font-size: 1.2em;
+    min-width: 196px;
+  }
+}
+
+#top-domains {
+    margin: 0 0 50px;
+}
+
+#top-domains h3 {
+    font-size: 1.5em;
+}
+
+#top-domains-list {
+    list-style-type: decimal;
+    padding-left: 20px;
+}
+
+#top-domains-list li {
+    font-size: 1.2em;
+    margin: 5px 0;
+}
+
+#domains-table {
+  padding: 0;
+}
+
+#domains-table td, #domains-table th {
+  border: 1px solid #ddd;
+  padding: 8px;
+  font-family: Arial, sans-serif;
+}
+
+#domains-table tr:nth-child(even){background-color: #000;}
+#domains-table tr:hover {background-color: #242424; color: #ffff;}
+
+#domains-table td:nth-child(odd){text-align: center;}
+
+#domains-table th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #242424;
+  color: white;
+}
+
