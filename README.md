@@ -14,6 +14,8 @@ Shoutout to https://github.com/johan/world.geo.json for the country outlines use
 # What does it do?
 I create this to make it display the top OS types, top browsers (user-agents), and top domains for each country
 
+https://github.com/user-attachments/assets/9886560b-ce25-48c4-a1cc-f974d4eb910e
+
 # What you need
 - A Mapbox account for the mapping (https://account.mapbox.com)
 - A Cloudflare dash account for the data (https://dash.cloudflare.com)
