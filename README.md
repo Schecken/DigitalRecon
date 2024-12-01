@@ -1,3 +1,5 @@
+![favicon](https://github.com/user-attachments/assets/ddfb422b-f0d4-4aa3-8939-9ee3e638003a)
+
 # Digital Recon
 A little weekend project using mapping and the Cloudflare API
 
