@@ -99,4 +99,5 @@ In `script.js`, enter:
 
 Run a http server - however you want but I used python (`python3 -m http.server 80`)
 - Make sure that if you're running it this way, your CLI is in the same folder as the files
+
 Access the app at `localhost` or `127.0.0.1`
