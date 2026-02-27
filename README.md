@@ -23,6 +23,8 @@ For each clicked country, it shows:
   - Most common OS
   - Most common first hop ASN
 
+https://github.com/user-attachments/assets/f8c01598-2709-404d-b3db-0f19096a03ae
+
 # What you need
 - A Mapbox account (https://account.mapbox.com)
 - A Cloudflare account (https://dash.cloudflare.com)
