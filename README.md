@@ -1,103 +1,170 @@
 ![favicon](https://github.com/user-attachments/assets/ddfb422b-f0d4-4aa3-8939-9ee3e638003a)
 
 # Digital Recon
-A little weekend project using mapping and the Cloudflare API
+A little weekend project using mapping and Cloudflare/APIs.
 
-Cloudflare has some really cool data available and I thought it would be a fun weekend project to put together an interactive map to build a dashboard to see what's going on in the world.
+Cloudflare has some really cool data available and I thought it would be a fun project to throw together an interactive map/dashboard to see what is going on by country.
 
-Radar (https://radar.cloudflare.com) is an awesome resource that has a bunch of data worth looking at; including country-specific data. The new Data Explorer made it really easy to find and embed graphs using their data (https://radar.cloudflare.com/explorer)
+Radar (https://radar.cloudflare.com) is an awesome resource and the Data Explorer makes embedding charts pretty easy (https://radar.cloudflare.com/explorer).
 
-**Fair warning, this was a weekend project and the code is stitched together badly. Some of the country code translations might be wrong, you'll have to fix that yourself**
+**Fair warning:** this started as a weekend hack, so parts of the code are still rough around the edges.
 
-Shoutout to https://github.com/johan/world.geo.json for the country outlines used
+Shoutout to https://github.com/johan/world.geo.json for the country outlines used.
 
-# What does it do?
-I created this to make it display the top OS types, top browsers (user-agents), and top domains for each country
-
-https://github.com/user-attachments/assets/9886560b-ce25-48c4-a1cc-f974d4eb910e
+# What it does
+For each clicked country, it shows:
+- Cloudflare Radar embeds (mobile vs desktop, OS, browsers)
+- Top domains
+- Technical Planning Data panels:
+  - Most common messaging apps (Google Play + iOS, Apptopia primary)
+  - Most common email apps
+  - Most common phones and laptops
+  - Most common browsers
+  - Most common OS
+  - Most common first hop ASN
 
 # What you need
-- A Mapbox account for the mapping (https://account.mapbox.com)
-- A Cloudflare dash account for the data (https://dash.cloudflare.com)
+- A Mapbox account (https://account.mapbox.com)
+- A Cloudflare account (https://dash.cloudflare.com)
 
-# How to do it
-I've put my code in the files here so you can just download them, enter the API keys for both Mapbox and Cloudflare and away you go. There are a few tricky bits I had to work through so hopefully this helps you spend less time than I did on it.
+# How to set it up
 
 ## Step 1
-Register a free account on Mapbox and grab the public API key (https://account.mapbox.com/access-tokens/). This should look something like a JWT `pk.eyJ1Ij<SNIP>8ifQ.yDJ8G<SNIP>tQw`
+Create a Mapbox token and put it in `script.js`:
+- `mapboxgl.accessToken = 'YOUR_MAPBOX_PUBLIC_TOKEN'`
 
 ## Step 2
-Register a Cloudflare account and create an API token (https://dash.cloudflare.com/user_string_here/api-tokens). The only permission you need is `Radar: Read`
+Create a Cloudflare API token:
+- Permission needed: `Radar: Read`
 
-## Step 3
-This was the annoying part that took me a while. For some reason (and I was too lazy to figure out the reason), the Cloudflare API doesn't like it if you're accessing the API from an unregistered domain. If you do, it'll throw an error like this:
+## Step 3 (important)
+Use a Cloudflare Worker as a proxy for CORS + API forwarding.
+
+The Worker now does **two** jobs:
+- Proxies Cloudflare Radar API (`/client/v4/radar/...`)
+- Proxies allowed external URLs (`/proxy?url=...`) for chart scraping
+
+### Security change (new)
+Your Cloudflare API token is **no longer in frontend code**.
+Do **not** hardcode it in `script.js` or Worker source.
+Store it as a Worker secret named `CF_API_TOKEN`.
+
+From Dashboard
 ```
-Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at ...
-
-Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 400.
+Cloudflare Dashboard -> Workers & Pages -> <your worker> -> Settings -> Variables and Secrets -> Add -> Secret
+Name: CF_API_TOKEN
+Value: your token string (Xxx1-...)
 ```
 
-Seeing as I was doing the dev from my localhost, using a python http.server, and I also didn't intend to host it on the public internet, it was a pain in the ass to figure out how I could get it to respond with the `Access-Control-Allow-Origin` header. Finally I worked out that I could essentially proxy it through a Cloudflare Worker and after some mucking around, I got it to work.
+Or set the secret via `wrangler`:
+```bash
+wrangler secret put CF_API_TOKEN
+```
 
-### Cloudflare Worker
-Log into your Cloudflare Dash > Workers & Pages > Overview > Create
-
-This was my code which essentially relays any requests to the actual API:
+### Worker code
 ```js
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
-})
+export default {
+  async fetch(request, env) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: corsHeaders() });
+    }
 
-async function handleRequest(request) {
-  const url = new URL(request.url)
+    const url = new URL(request.url);
 
-  // Construct the API URL from the request URL
-  const apiUrl = `https://api.cloudflare.com${url.pathname}${url.search}`
+    // Generic proxy route for external pages (Apptopia, r.jina, etc.)
+    if (url.pathname === "/proxy") {
+      const target = url.searchParams.get("url");
+      if (!target) {
+        return json({ error: "Missing ?url=" }, 400);
+      }
 
-  // Forward the request to Cloudflare API
-  const apiResponse = await fetch(apiUrl, {
-    method: request.method,
-    headers: {
-      ...request.headers,
-      'Authorization': 'Bearer CLOUDFLARE_API_KEY', // Replace with your Cloudflare API key
-      'Content-Type': 'application/json',
-    },
-  })
+      let targetUrl;
+      try {
+        targetUrl = new URL(target);
+      } catch {
+        return json({ error: "Invalid url" }, 400);
+      }
 
-  // If the API response is OK, return it with proper CORS headers
-  const responseHeaders = new Headers(apiResponse.headers)
+      // Optional allowlist for safety
+      const allowedHosts = new Set([
+        "apptopia.com",
+        "www.apptopia.com",
+        "r.jina.ai",
+        "www.appbrain.com",
+        "appbrain.com"
+      ]);
+      if (!allowedHosts.has(targetUrl.hostname)) {
+        return json({ error: "Host not allowed" }, 403);
+      }
 
-  // Add CORS headers to the response
-  responseHeaders.set('Access-Control-Allow-Origin', '*')  // Allow all origins
-  responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')  // Allowed HTTP methods
-  responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')  // Allowed headers
+      const upstream = await fetch(targetUrl.toString(), {
+        method: "GET",
+        headers: { "User-Agent": "Mozilla/5.0", "Accept": "*/*" }
+      });
 
-  // If the request is OPTIONS (preflight request), return 204 (No Content)
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: responseHeaders,
-    })
+      const headers = new Headers(upstream.headers);
+      applyCors(headers);
+      return new Response(upstream.body, {
+        status: upstream.status,
+        statusText: upstream.statusText,
+        headers
+      });
+    }
+
+    // Existing Cloudflare API passthrough (radar endpoints)
+    const apiUrl = `https://api.cloudflare.com${url.pathname}${url.search}`;
+    const upstream = await fetch(apiUrl, {
+      method: request.method,
+      headers: {
+        "Authorization": `Bearer ${env.CF_API_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body
+    });
+
+    const headers = new Headers(upstream.headers);
+    applyCors(headers);
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers
+    });
   }
+};
 
-  // Otherwise, return the Cloudflare API response with CORS headers
-  return new Response(apiResponse.body, {
-    status: apiResponse.status,
-    statusText: apiResponse.statusText,
-    headers: responseHeaders,
-  })
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization"
+  };
+}
+function applyCors(headers) {
+  Object.entries(corsHeaders()).forEach(([k, v]) => headers.set(k, v));
+}
+function json(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { "Content-Type": "application/json", ...corsHeaders() }
+  });
 }
 ```
 
-After deploying the Worker, I got my URL which looked something like `https://wispy-block-xxxa.xxxxx.workers.dev/`. This is the URL you are going to use in the code.
+Deploy the Worker and copy its URL (for example: `https://your-worker-name.workers.dev`).
 
 ## Step 4
-In `script.js`, enter:
-- Your Mapbox key into `mapboxgl.accessToken = 'MAPBOX_API_KEY';` (line 1)
-- Your Cloudflare key into `'Authorization': Bearer CLOUDFLARE_API_KEY` (line 123)
-- Replace your Cloudflare Worker URL in `const url = https://wispy-block-xxxa.xxxxx.workers.dev/client/v4/radar/ranking/top?limit=100&location=${countryCode};` (line 117)
+In `script.js`, set your Worker base in:
+- `const API_BASE = 'https://your-worker-name.workers.dev/client/v4/radar';`
 
-Run a http server - however you want but I used python (`python3 -m http.server 80`)
-- Make sure that if you're running it this way, your CLI is in the same folder as the files
+That’s it for Cloudflare auth on the frontend. No bearer token in JS anymore.
 
-Access the app at `localhost` or `127.0.0.1`
+## Step 5
+Run this project with the built-in Node server (serves frontend + Playwright `/api/free` extraction endpoint):
+```bash
+npm install
+npx playwright install chromium
+npm start
+```
+
+Open:
+`http://localhost`
