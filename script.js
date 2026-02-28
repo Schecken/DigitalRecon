@@ -1,4 +1,4 @@
-mapboxgl.accessToken = 'pk.eyJ1IjoidGhpcnRlZW50ZXN0ZXJzIiwiYSI6ImNtNDNpdTF6eDBjYzAybHB5cjh6azYydW8ifQ.yDJ8G5yta7lHtUAGQ0OtQw';
+mapboxgl.accessToken = 'xxxxxxxxxxxxxxxxxxxxxxx'; // Change to your own mapbox API key
 if (typeof mapboxgl.setTelemetryEnabled === 'function') {
     mapboxgl.setTelemetryEnabled(false);
 }
@@ -24,12 +24,8 @@ var countryNameToAlpha2Mapping  = {"Afghanistan": "AF", "Åland Islands": "AX", 
 
 let currentDateRange = '12w'; // Default date range
 
-const API_BASE = 'https://wispy-block-dc7a.thunderraccoon.workers.dev/client/v4/radar';
+const API_BASE = 'https://your-worker-name.workers.dev/client/v4/radar'; // Change this to your own
 const WORKER_BASE = API_BASE.replace('/client/v4/radar', '');
-const API_HEADERS = {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer Kje4-Gm54eB4434TsjoktfKmAkz36es1ovTxFa8P'
-};
 
 const insightConfigs = [
     { key: 'messaging_apps', label: 'Most common messaging apps' },
@@ -2125,7 +2121,6 @@ async function getTopDomainsForCountry(countryCode) {
 async function fetchTopDomainsRaw(countryCode) {
     const response = await fetch(`${API_BASE}/ranking/top?limit=100&location=${countryCode}`, {
         method: 'GET',
-        headers: API_HEADERS
     });
 
     if (!response.ok) {
